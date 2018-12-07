@@ -1,0 +1,14 @@
+&nbsp;[<a title="Remove <% $User->Name %> from group <% $Group->Name %>"
+	href="<% $BaseUrl %>/Ticket/Display.html?id=<% $Ticket->Id %>&Ticket-DeleteWatcher-Type-<% $Group->Name %>-Principal-<% $User->PrincipalId %>=1"
+><strong><&|/l&>X</&></strong></a>]
+<%INIT>
+
+</%INIT>
+<%ONCE>
+	my $BaseUrl = RT->Config->Get('WebURL');
+</%ONCE>
+<%ARGS>
+	$User 	=> undef
+	$Ticket => undef
+	$Group	=> undef
+</%ARGS>
