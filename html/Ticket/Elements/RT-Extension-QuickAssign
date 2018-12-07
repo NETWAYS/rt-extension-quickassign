@@ -1,0 +1,115 @@
+<script>
+  jQuery(document).ready(function () {
+    jQuery('#<% $selectName %>').change(function () {
+      var uri = jQuery(this).val();
+      if (uri !== '<% loc($Title) %>') {
+        window.location.href = uri;
+      } else {
+        console.log('RT-Extension-QuickAssign: No principal selected');
+      }
+    });
+
+    jQuery('#<% $buttonName %>').click(function (e) {
+        e.preventDefault();
+        var uri = jQuery(this).data('uri');
+        if (uri) {
+            window.location.href = uri;
+        } else {
+            alert('RT-Extension-QuickAssign: Could not alter "<% $Type %>"');
+        }
+    });
+  });
+</script>
+<div style="margin-top: 0.5em;">
+    <form name="<% $formName %>">
+        <select id="<% $selectName %>" name="<% $selectName %>" value="GO">
+            <option selected><% loc($Title) %></option>
+            <% join('', @links) | n %>
+        </select>
+%       if ($displayButton eq 1) {
+            <button style="text-align: center; width: 80px;" id="<% $buttonName %>" data-uri="<% $buttonUri %>"><% loc($titleButton) %></button>
+%       }
+    </form>
+</div>
+<%init>
+return unless(RT->Config->Get('QuickAssign_Enable') && RT->Config->Get('QuickAssign_Group'));
+
+my $hexUid          = genHexUID64();
+my $formName        = 'form_' . $hexUid;
+my $selectName      = 'select_' . $hexUid;
+my $buttonName      = 'button_' . $hexUid;
+my $displayButton   = 0;
+my $titleButton     = 'Me';
+my $buttonUri       = '';
+my $CustomGroup     = RT::Group->new($session{'CurrentUser'});
+my $me              = $session{'CurrentUser'};
+
+sub genHexUID64{
+    my $UID = '';
+    for (my $i = 0; $i < 4; $i++) {
+        $UID .= sprintf("%x", int(rand() * 65535 + 0.5));
+    }
+    return $UID;
+}
+
+$CustomGroup->LoadUserDefinedGroup(RT->Config->Get('QuickAssign_Group'));
+
+my $Members = $CustomGroup->UserMembersObj();
+
+$Members->OrderBy(
+    ALIAS => 'main',
+    FIELD => 'NickName',
+    ORDER => 'ASC'
+);
+
+my @links = ();
+my $base = RT->Config->Get('WebURL'). 'Ticket/Display.html?id='. $Ticket->Id;
+
+while (my $User = $Members->Next()) {
+
+    if ($Group && ref($Group) eq 'RT::Group' && $Group->HasMember($User->PrincipalId)) {
+        next;
+    }
+    elsif ($Type eq 'Owner' && $Ticket->Owner == $User->PrincipalId) {
+        next;
+    }
+
+    my $href = '';
+
+    if ($Type =~ /^Requestor.?|Cc|AdminCc/) {
+        $href = $base. '&Ticket-AddWatcher-Principal-'. $User->PrincipalId. '='. $Type;
+    }
+    elsif ($Type =~ /^Owner/) {
+        $href = $base. '&ForceOwnerChange=1&Owner='. $User->PrincipalId;
+    }
+
+    push @links, sprintf(
+        '<option value="%s">%s%s</option>',
+        $href,
+        $User->RealName,
+        $User->NickName ? sprintf(' (%s)', $User->NickName) : ''
+    );
+}
+
+if ($Type eq 'Owner' && $Ticket->Owner != $me->PrincipalId) {
+    $displayButton = 1;
+    $buttonUri = $base . '&ForceOwnerChange=1&Owner='. $me->PrincipalId;
+    $titleButton = 'Take';
+} elsif ($Group && ref($Group) eq 'RT::Group' && ! $Group->HasMember($me->PrincipalId)) {
+    $displayButton = 1;
+    $buttonUri = $base. '&Ticket-AddWatcher-Principal-'. $me->PrincipalId. '='. $Type;
+    $titleButton = 'Add self';
+}
+
+return unless(scalar(@links));
+
+</%init>
+<%once>
+    use Data::Dumper;
+</%once>
+<%args>
+    $Title => 'Add'
+    $Type
+    $Ticket
+    $Group => ()
+</%args>
