@@ -24,6 +24,6 @@ requires:
 resources:
   license: http://opensource.org/licenses/gpl-license.php
   repository: https://git.netways.org/rt4/rt-extension-quickassign
-version: 2.0.1
+version: 1.0.0
 x_module_install_rtx_version: '0.40'
 x_requires_rt: 4.4.2
