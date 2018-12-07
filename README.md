@@ -15,9 +15,15 @@ Enable quick assign of users as AdminCC or Owner and
 improve the layout with moving the "people" tab onto the
 right upper corner.
 
-* Quick assign of people as AdminCc or Owner \[Configurable\]
+* Quick assign of people as Owner or AdminCC (Configurable)
+
+<img src="https://github.com/NETWAYS/rt-extension-quickassign/blob/master/doc/screenshot/rt_extension_quickassign_owner.png" alt="Owner" height="200"> <img src="https://github.com/NETWAYS/rt-extension-quickassign/blob/master/doc/screenshot/rt_extension_quickassign_admincc.png" alt="AdminCC" height="200">
+
 * Quick removal of people registered as AdminCc or Requestor
 * Switched positions of ticket people and reminders
+
+![Overview](doc/screenshot/rt_extension_quickassign_overview.png)
+
 
 ## License
 
@@ -69,7 +75,7 @@ Restart your webserver.
 
 ## Configuration
 
-**QuickAssign_Enabled**
+**$QuickAssign_Enabled**
 
 If enabled, shows the form controls to quickly assign people as AdminCc or Owner.
 
@@ -81,5 +87,5 @@ Which group's members should be choosable when showing the quick assign form con
 
 ```
 Set($QuickAssign_Enable, 1);
-Set($QuickAssign_Group, 'NETWAYS');
+Set($QuickAssign_Group, 'netways');
 ```
