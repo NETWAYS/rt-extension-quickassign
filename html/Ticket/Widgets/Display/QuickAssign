@@ -1,0 +1,32 @@
+%# Quick assign of ticket people from a configured group.
+%#
+%# Add this widget to the ticket display page via Admin -> Page Layouts
+%# (class RT::Ticket, page Display).
+% $m->callback( %ARGS, CallbackName => 'BeforeWidget' );
+<&| /Widgets/TitleBox, title => loc('Quick Assign'), class => 'ticket-info-quickassign' &>
+  <div hx-trigger="ticketWatchersChanged from:body, ticketOwnerChanged from:body" hx-get="<% RT->Config->Get('WebPath') %>/Views/Ticket/QuickAssign?id=<% $TicketObj->id %>">
+    <& /Ticket/Elements/QuickAssign, Ticket => $TicketObj &>
+  </div>
+</&>
+% $m->callback( %ARGS, CallbackName => 'AfterWidget' );
+
+<%ARGS>
+$TicketObj
+</%ARGS>
+
+<%METHOD PreCheck>
+<%args>
+$Object
+</%args>
+<%init>
+return 0 unless RT->Config->Get('QuickAssign_Group');
+
+my ($can_modify_owner) = $Object->CurrentUserCanSetOwner();
+return 1
+    if $can_modify_owner
+    || $Object->CurrentUserHasRight('ModifyTicket')
+    || $Object->CurrentUserHasRight('Watch')
+    || $Object->CurrentUserHasRight('WatchAsAdminCc');
+return 0;
+</%init>
+</%METHOD>

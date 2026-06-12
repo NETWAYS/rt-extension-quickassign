@@ -1,54 +1,73 @@
 NAME
-    RT-Extension-QuickAssign - Quick assign of users as AdminCC or Owner
+    RT-Extension-QuickAssign - Quickly assign ticket people from a
+    configured group
 
 DESCRIPTION
-    *   Quick assign of people as AdminCc or Owner [Configurable]
+    Adds a "Quick Assign" widget to the ticket display page. It lets you
+    assign people as Owner, AdminCc, Cc or Requestor by picking them from
+    the members of a single configured group, instead of searching the whole
+    user database. The member list is rendered into the page, so filtering
+    happens instantly in the browser without autocomplete queries - useful
+    on installations with a very large number of contacts.
 
-    *   Quick removal of poeple registered as AdminCc or Requestor
-
-    *   Switched positions of ticket people and reminders
+    The widget also offers one-click Take and Add me as AdminCc buttons, and
+    each AdminCc, Cc and Requestor in the People box gets a small remove
+    button. All updates go through RT's standard ticket update machinery
+    (rights checks and notifications apply) and refresh the People box in
+    place without a page reload.
 
 RT VERSION
-    Works with RT 4.4.2
+    Works with RT 6.
+
+    For RT 4.4 use version 1.x of this extension.
 
 INSTALLATION
-    perl Makefile.PL
-    make
-    make install
+    "perl Makefile.PL"
+    "make"
+    "make install"
         May need root permissions
 
-    Edit your /opt/rt4/etc/RT_SiteConfig.pm
+    Edit your /opt/rt6/etc/RT_SiteConfig.pm
         Add this line:
 
-            Plugin('RT::Extension::Netways');
+            Plugin('RT::Extension::QuickAssign');
 
     Clear your mason cache
-            rm -rf /opt/rt4/var/mason_data/obj
+            rm -rf /opt/rt6/var/mason_data/obj
 
     Restart your webserver
 
+SETUP
+    The widget is not shown automatically. Add it to the ticket display page
+    layout: go to Admin -> Page Layouts, edit the layout for class
+    "RT::Ticket", page "Display", and place the "QuickAssign" widget where
+    you want it (for example below the "People" widget).
+
 CONFIGURATION
-  $QuickAssign_Enable
-    If enabled, shows the form controls to quickly assign people as AdminCc
-    or Owner.
-
   $QuickAssign_Group
-    Which group's members should be choosable when showing the quick assign
-    form controls.
+    Name of the user-defined group whose members are offered in the Quick
+    Assign widget. The widget is hidden if this option is not set.
 
-  Example
-    Set($QuickAssign_Enable, 1);
-    Set($QuickAssign_Group, 'NETWAYS');
+        Set($QuickAssign_Group, 'Support');
+
+    Note that RT's usual rights apply: to be assigned as owner, the picked
+    user needs the "OwnTicket" right on the ticket's queue.
+
+LIMITATIONS
+    The remove buttons in the People box are only shown if the current user
+    has the "ModifyTicket" right. Group watchers do not get a remove button,
+    as RT core offers no hook for decorating them; remove them via the
+    People box inline edit instead.
 
 AUTHOR
     NETWAYS GmbH <lt>support@netways.de<gt>
 
 BUGS
     All bugs should be reported on GitHub
-    <https://github.com/NETWAYS/rt-extension-quickassign>.
+    <https://github.com/NETWAYS/rt-extension-quickassign/issues>.
 
 LICENSE AND COPYRIGHT
-    This software is Copyright (c) 2018 by NETWAYS GmbH
+    This software is Copyright (c) 2018-2026 by NETWAYS GmbH
 
     This is free software, licensed under:
 

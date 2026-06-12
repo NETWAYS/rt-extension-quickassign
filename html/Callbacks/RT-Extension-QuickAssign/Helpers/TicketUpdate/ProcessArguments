@@ -1,0 +1,24 @@
+%# Translate the Quick Assign widget's form fields into standard ticket
+%# update arguments so the core TicketUpdate helper processes them with
+%# its usual rights checks and notifications.
+<%INIT>
+my $user_id = $ARGSRef->{QuickAssignUser};
+return unless defined $user_id && $user_id =~ /^\d+$/;
+
+# No fallback type: QuickAssignType is only submitted by the action
+# buttons. The Take and "Add me" buttons submit the same form with the
+# user select still set, and must not trigger an assignment.
+my $type = $ARGSRef->{QuickAssignType} // '';
+return unless $type =~ /^(?:Owner|AdminCc|Cc|Requestor)$/;
+
+if ( $type eq 'Owner' ) {
+    $ARGSRef->{Owner}            = $user_id;
+    $ARGSRef->{ForceOwnerChange} = 1;
+}
+else {
+    $ARGSRef->{ 'Ticket-AddWatcher-Principal-' . $user_id } = $type;
+}
+</%INIT>
+<%ARGS>
+$ARGSRef => undef
+</%ARGS>

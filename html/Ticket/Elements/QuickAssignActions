@@ -1,0 +1,35 @@
+%# Action buttons for the user picked in the Quick Assign widget.
+%# Fetched via /Views/Ticket/QuickAssignActions and swapped into the
+%# widget's form; only roles that make sense for the picked user are
+%# offered. The buttons submit the surrounding form to
+%# /Helpers/TicketUpdate.
+% for my $action (@actions) {
+<button type="submit" class="btn btn-sm btn-primary me-1 mb-1" name="QuickAssignType" value="<% $action->{value} %>"><% $action->{label} %></button>
+% }
+% unless (@actions) {
+<span class="text-body-secondary"><&|/l&>No actions available for this user</&></span>
+% }
+<%INIT>
+return unless $QuickAssignUser && $QuickAssignUser =~ /^\d+$/;
+
+my $user = RT::User->new( $session{CurrentUser} );
+$user->Load($QuickAssignUser);
+return unless $user->id;
+
+my @actions;
+if ( $Ticket->Owner != $user->id
+    && $user->PrincipalObj->HasRight( Right => 'OwnTicket', Object => $Ticket ) ) {
+    push @actions, { value => 'Owner', label => loc('Set Owner') };
+}
+for my $type (qw(AdminCc Cc Requestor)) {
+    next if $Ticket->RoleGroup($type)->HasMemberRecursively( $user->PrincipalId );
+    push @actions, { value => $type, label => loc( 'Add [_1]', loc($type) ) };
+}
+</%INIT>
+<%ARGS>
+$Ticket
+$QuickAssignUser => undef
+</%ARGS>
+<%attr>
+directly_accessible => 1
+</%attr>

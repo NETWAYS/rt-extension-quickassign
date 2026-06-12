@@ -1,0 +1,64 @@
+%# Form content of the Quick Assign widget. Reloaded via
+%# /Views/Ticket/QuickAssign whenever ticket people change.
+%#
+%# Picking a user fetches the action buttons for that user from
+%# /Views/Ticket/QuickAssignActions; the buttons submit to the core
+%# /Helpers/TicketUpdate endpoint. The QuickAssignUser/QuickAssignType
+%# fields are translated into standard ticket update arguments by this
+%# extension's ProcessArguments callback.
+<form hx-post="<% RT->Config->Get('WebPath') %>/Helpers/TicketUpdate" hx-swap="none">
+  <input type="hidden" class="hidden" name="id" value="<% $Ticket->id %>" />
+% if (@buttons) {
+  <div class="mb-2">
+%   for my $button (@buttons) {
+    <button type="submit" class="btn btn-sm btn-primary me-1" name="<% $button->{name} %>" value="<% $button->{value} %>"><% $button->{label} %></button>
+%   }
+  </div>
+% }
+  <select name="QuickAssignUser" class="form-select selectpicker"
+    hx-get="<% RT->Config->Get('WebPath') %>/Views/Ticket/QuickAssignActions?id=<% $Ticket->id %>"
+    hx-target="#quickassign-actions-<% $Ticket->id %>"
+    hx-swap="innerHTML"
+  >
+    <option value="" selected><% loc('(choose a user)') %></option>
+% for my $user (@members) {
+    <option value="<% $user->PrincipalId %>"><% $user->RealName || $user->Name %> (<% $user->Name %>)</option>
+% }
+  </select>
+  <div id="quickassign-actions-<% $Ticket->id %>" class="mt-2"></div>
+</form>
+<%INIT>
+my $group = RT::Group->new( $session{CurrentUser} );
+$group->LoadUserDefinedGroup( RT->Config->Get('QuickAssign_Group') // '' );
+unless ( $group->id ) {
+    RT->Logger->warning( 'QuickAssign: unable to load group "' . ( RT->Config->Get('QuickAssign_Group') // '' ) . '"' );
+    return;
+}
+
+my $users = $group->UserMembersObj( Recursively => 1 );
+my @members;
+while ( my $user = $users->Next ) {
+    push @members, $user;
+}
+@members = sort { lc( $a->RealName || $a->Name ) cmp lc( $b->RealName || $b->Name ) } @members;
+
+my $me = $session{CurrentUser};
+my @buttons;
+my ($can_take) = $Ticket->CurrentUserCanSetOwner( Type => 'Take' );
+if ($can_take) {
+    push @buttons, { name => 'Owner', value => $me->id, label => loc('Take') };
+}
+if ( !$Ticket->AdminCc->HasMemberRecursively( $me->PrincipalId ) ) {
+    push @buttons, {
+        name  => 'Ticket-AddWatcher-Principal-' . $me->PrincipalId,
+        value => 'AdminCc',
+        label => loc('Add me as AdminCc'),
+    };
+}
+</%INIT>
+<%ARGS>
+$Ticket
+</%ARGS>
+<%attr>
+directly_accessible => 1
+</%attr>
