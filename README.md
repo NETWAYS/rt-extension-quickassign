@@ -96,10 +96,17 @@ want it (for example below the `People` widget).
 Name of the user-defined group whose members are offered in the Quick
 Assign widget. The widget is hidden if this option is not set.
 
+**$QuickAssign_ExtraUsers**
+
+Optional list of user names offered in the Quick Assign widget in
+addition to the group members, for example shared or role accounts.
+Unknown and disabled users are skipped.
+
 ### Example
 
 ```
 Set($QuickAssign_Group, 'Support');
+Set($QuickAssign_ExtraUsers, ['NETWAYS']);
 ```
 
 Note that RT's usual rights apply: to be assigned as owner, the picked

@@ -4,7 +4,7 @@ use 5.010_001;
 use strict;
 use warnings;
 
-our $VERSION='2.0.0';
+our $VERSION='2.1.0';
 
 =head1 NAME
 
@@ -76,6 +76,14 @@ Assign widget. The widget is hidden if this option is not set.
 
 Note that RT's usual rights apply: to be assigned as owner, the picked
 user needs the C<OwnTicket> right on the ticket's queue.
+
+=head2 C<$QuickAssign_ExtraUsers>
+
+Optional list of user names offered in the Quick Assign widget in
+addition to the group members, for example shared or role accounts.
+Unknown and disabled users are skipped.
+
+    Set($QuickAssign_ExtraUsers, ['NETWAYS']);
 
 =head1 LIMITATIONS
 

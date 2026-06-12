@@ -36,10 +36,22 @@ unless ( $group->id ) {
 }
 
 my $users = $group->UserMembersObj( Recursively => 1 );
-my @members;
+my (@members, %seen);
 while ( my $user = $users->Next ) {
-    push @members, $user;
+    push @members, $user unless $seen{ $user->id }++;
 }
+
+for my $name ( @{ RT->Config->Get('QuickAssign_ExtraUsers') // [] } ) {
+    my $user = RT::User->new( $session{CurrentUser} );
+    $user->Load($name);
+    unless ( $user->id ) {
+        RT->Logger->warning( qq{QuickAssign: unable to load extra user "$name"} );
+        next;
+    }
+    next if $user->PrincipalObj->Disabled;
+    push @members, $user unless $seen{ $user->id }++;
+}
+
 @members = sort { lc( $a->RealName || $a->Name ) cmp lc( $b->RealName || $b->Name ) } @members;
 
 my $me = $session{CurrentUser};

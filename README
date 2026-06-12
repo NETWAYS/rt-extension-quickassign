@@ -53,6 +53,13 @@ CONFIGURATION
     Note that RT's usual rights apply: to be assigned as owner, the picked
     user needs the "OwnTicket" right on the ticket's queue.
 
+  $QuickAssign_ExtraUsers
+    Optional list of user names offered in the Quick Assign widget in
+    addition to the group members, for example shared or role accounts.
+    Unknown and disabled users are skipped.
+
+        Set($QuickAssign_ExtraUsers, ['NETWAYS']);
+
 LIMITATIONS
     The remove buttons in the People box are only shown if the current user
     has the "ModifyTicket" right. Group watchers do not get a remove button,
