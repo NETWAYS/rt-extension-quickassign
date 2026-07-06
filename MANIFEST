@@ -2,8 +2,8 @@ AUTHORS
 html/Callbacks/RT-Extension-QuickAssign/Helpers/TicketUpdate/ProcessArguments
 html/Callbacks/RT-Extension-QuickAssign/Ticket/Elements/ShowGroupMembers/AboutThisUser
 html/Ticket/Elements/QuickAssign
-html/Ticket/Elements/QuickAssignActions
 html/Ticket/Widgets/Display/QuickAssign
+static/css/quickassign.css
 inc/Module/Install.pm
 inc/Module/Install/Base.pm
 inc/Module/Install/Can.pm

@@ -1,11 +1,15 @@
 %# Form content of the Quick Assign widget. Reloaded via
 %# /Views/Ticket/QuickAssign whenever ticket people change.
 %#
-%# Picking a user fetches the action buttons for that user from
-%# /Views/Ticket/QuickAssignActions; the buttons submit to the core
-%# /Helpers/TicketUpdate endpoint. The QuickAssignUser/QuickAssignType
-%# fields are translated into standard ticket update arguments by this
-%# extension's ProcessArguments callback.
+%# Members are searched by typing at least 2 characters into the
+%# filter field; matches drop down as a floating overlay (like a
+%# native select) instead of expanding the box, since a group can have
+%# far too many members to list flat. Each matching row offers a Set
+%# Owner button plus one Add button per applicable AdminCc/Cc/Requestor
+%# role. Each button submits a combined QuickAssign=Type:PrincipalId
+%# field to the core /Helpers/TicketUpdate endpoint, translated into
+%# standard ticket update arguments by this extension's
+%# ProcessArguments callback.
 <form hx-post="<% RT->Config->Get('WebPath') %>/Helpers/TicketUpdate" hx-swap="none">
   <input type="hidden" class="hidden" name="id" value="<% $Ticket->id %>" />
 % if (@buttons) {
@@ -15,18 +19,67 @@
 %   }
   </div>
 % }
-  <select name="QuickAssignUser" class="form-select selectpicker"
-    hx-get="<% RT->Config->Get('WebPath') %>/Views/Ticket/QuickAssignActions?id=<% $Ticket->id %>"
-    hx-target="#quickassign-actions-<% $Ticket->id %>"
-    hx-swap="innerHTML"
-  >
-    <option value="" selected><% loc('(choose a user)') %></option>
-% for my $user (@members) {
-    <option value="<% $user->PrincipalId %>"><% $user->RealName || $user->Name %> (<% $user->Name %>)</option>
+  <div style="position: relative;">
+  <input type="text" class="form-control form-control-sm" id="quickassign-filter-<% $Ticket->id %>"
+    placeholder="<% loc('Search for a name...') %>" autocomplete="off"
+    onkeydown="if (event.key === 'Enter') event.preventDefault();" />
+  <div class="hidden" id="quickassign-members-<% $Ticket->id %>"
+    style="position: absolute; top: 100%; left: 0; right: 0; z-index: 20; max-height: 300px;
+           overflow-y: auto; background: var(--bs-body-bg); border: 1px solid var(--bs-border-color);
+           border-radius: var(--bs-border-radius); box-shadow: 0 .25rem .5rem rgba(0, 0, 0, .15);">
+  <div class="hidden text-body-secondary px-2 py-1" id="quickassign-no-results-<% $Ticket->id %>"><small><&|/l&>No matching members</&></small></div>
+% for my $row (@rows) {
+%   my $user  = $row->{User};
+%   my $label = $user->RealName || $user->Name;
+  <div class="quickassign-row d-flex align-items-center gap-1 py-1 px-2 border-bottom" data-name="<% lc( $label . ' (' . $user->Name . ')' ) %>">
+    <span class="flex-grow-1 text-truncate"><% $label %> (<% $user->Name %>)</span>
+%   if ($row->{CanOwn}) {
+    <button type="submit" class="btn btn-sm btn-primary text-nowrap" name="QuickAssign" value="Owner:<% $user->PrincipalId %>"><&|/l&>Set Owner</&></button>
+%   }
+%   for my $type (@{ $row->{ExtraRoles} }) {
+    <button type="submit" class="btn btn-sm btn-outline-secondary text-nowrap" name="QuickAssign" value="<% $type %>:<% $user->PrincipalId %>"><% loc('Add [_1]', loc($type)) %></button>
+%   }
+  </div>
 % }
-  </select>
-  <div id="quickassign-actions-<% $Ticket->id %>" class="mt-2"></div>
+  </div>
+  </div>
 </form>
+<script type="text/javascript">
+jQuery(function() {
+    var quickassignMinChars = 2;
+    var $filter    = jQuery('#quickassign-filter-<% $Ticket->id %>');
+    var $list      = jQuery('#quickassign-members-<% $Ticket->id %>');
+    var $noResults = jQuery('#quickassign-no-results-<% $Ticket->id %>');
+
+    $filter.on('keyup', function() {
+        var q = jQuery(this).val().toLowerCase();
+        if (q.length < quickassignMinChars) {
+            $list.addClass('hidden');
+            return;
+        }
+        var visible = 0;
+        $list.find('.quickassign-row').each(function() {
+            var match = jQuery(this).data('name').indexOf(q) !== -1;
+            jQuery(this).toggleClass('hidden', !match);
+            if (match) visible++;
+        });
+        $noResults.toggleClass('hidden', visible > 0);
+        $list.removeClass('hidden');
+    });
+
+    $filter.on('focus', function() {
+        if (jQuery(this).val().length >= quickassignMinChars) {
+            $list.removeClass('hidden');
+        }
+    });
+
+    // Delay hiding on blur so a click on a button inside the dropdown
+    // still registers before it disappears.
+    $filter.on('blur', function() {
+        setTimeout(function() { $list.addClass('hidden'); }, 200);
+    });
+});
+</script>
 <%INIT>
 my $group = RT::Group->new( $session{CurrentUser} );
 $group->LoadUserDefinedGroup( RT->Config->Get('QuickAssign_Group') // '' );
@@ -54,11 +107,29 @@ for my $name ( @{ RT->Config->Get('QuickAssign_ExtraUsers') // [] } ) {
 
 @members = sort { lc( $a->RealName || $a->Name ) cmp lc( $b->RealName || $b->Name ) } @members;
 
+my @rows;
+for my $user (@members) {
+    my $can_own = $Ticket->Owner != $user->id
+        && $user->PrincipalObj->HasRight( Right => 'OwnTicket', Object => $Ticket );
+
+    my @extra_roles;
+    for my $type (qw(AdminCc Cc Requestor)) {
+        push @extra_roles, $type
+            unless $Ticket->RoleGroup($type)->HasMemberRecursively( $user->PrincipalId );
+    }
+
+    push @rows, { User => $user, CanOwn => $can_own, ExtraRoles => \@extra_roles };
+}
+
 my $me = $session{CurrentUser};
 my @buttons;
-my ($can_take) = $Ticket->CurrentUserCanSetOwner( Type => 'Take' );
+my ($can_take)  = $Ticket->CurrentUserCanSetOwner( Type => 'Take' );
+my ($can_steal) = $Ticket->CurrentUserCanSetOwner( Type => 'Steal' );
 if ($can_take) {
     push @buttons, { name => 'Owner', value => $me->id, label => loc('Take') };
+}
+elsif ($can_steal) {
+    push @buttons, { name => 'Owner', value => $me->id, label => loc('Steal') };
 }
 if ( !$Ticket->AdminCc->HasMemberRecursively( $me->PrincipalId ) ) {
     push @buttons, {

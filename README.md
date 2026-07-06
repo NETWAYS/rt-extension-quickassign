@@ -20,19 +20,23 @@ database. The member list is rendered into the page, so filtering happens
 instantly in the browser without autocomplete queries — useful on
 installations with a very large number of contacts.
 
-The widget also offers one-click **Take** and **Add me as AdminCc**
-buttons, and each AdminCc, Cc and Requestor in the People box gets a
-small remove button. All updates go through RT's standard ticket
-update machinery (rights checks and notifications apply) and refresh
-the People box in place without a page reload.
+Typing at least 2 characters into the search field drops down
+matching members as a floating overlay, each with a **Set Owner**
+button plus one **Add** button per applicable AdminCc/Cc/Requestor
+role. The widget also offers one-click **Take**/**Steal** and
+**Add me as AdminCc** buttons, and each AdminCc, Cc and Requestor in
+the People box gets a small remove button. All updates go through
+RT's standard ticket update machinery (rights checks and
+notifications apply) and refresh the People box in place without a
+page reload.
 
-Type to filter the group members instantly:
+Type at least 2 characters to search the group members instantly:
 
 <img src="doc/screenshot/quickassign-search.png" alt="Searching a group member" width="500">
 
-Picking a user offers the roles that make sense for them:
+Each match offers Set Owner plus any applicable AdminCc/Cc/Requestor actions:
 
-<img src="doc/screenshot/quickassign-actions.png" alt="Action buttons for the picked user" width="500">
+<img src="doc/screenshot/quickassign-actions.png" alt="Actions for a group member" width="500">
 
 Watchers are removed directly in the People box:
 

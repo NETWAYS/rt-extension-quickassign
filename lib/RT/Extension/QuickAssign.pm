@@ -4,7 +4,9 @@ use 5.010_001;
 use strict;
 use warnings;
 
-our $VERSION='2.1.0';
+our $VERSION='2.2.0';
+
+RT->AddStyleSheets('quickassign.css');
 
 =head1 NAME
 
@@ -20,7 +22,10 @@ filtering happens instantly in the browser without autocomplete
 queries - useful on installations with a very large number of
 contacts.
 
-The widget also offers one-click B<Take> and B<Add me as AdminCc>
+Typing at least 2 characters into the search field drops down matching
+members as a floating overlay, each with a B<Set Owner> button plus
+one B<Add> button per applicable AdminCc/Cc/Requestor role. The widget
+also offers one-click B<Take>/B<Steal> and B<Add me as AdminCc>
 buttons, and each AdminCc, Cc and Requestor in the People box gets a
 small remove button. All updates go through RT's standard ticket
 update machinery (rights checks and notifications apply) and refresh

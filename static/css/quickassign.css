@@ -1,0 +1,7 @@
+/* Match the People box's colored top border, since Quick Assign edits
+   the same ticket people (owner/watchers). Keep in sync with
+   .ticket-info-people in RT core's boxes.css. */
+.titlebox.card.ticket-info-quickassign {
+    border-top: 3px solid;
+    border-top-color: #0288D1;
+}
